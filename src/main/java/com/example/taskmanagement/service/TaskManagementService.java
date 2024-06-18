@@ -1,4 +1,4 @@
-package com.example.taskmanagement.controller;
+package com.example.taskmanagement.service;
 
 import com.example.taskmanagement.enums.Priority;
 import com.example.taskmanagement.enums.Status;
@@ -7,11 +7,18 @@ import com.example.taskmanagement.model.Task;
 import com.example.taskmanagement.model.User;
 import com.example.taskmanagement.repository.TaskRepository;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
-public class TaskManagementServiceController {
-    public TaskRepository taskRepository = new TaskRepository();
+public class TaskManagementService {
+    public TaskRepository taskRepository;
+    Map<User, List<Task>> userToTasksMapping;
+    NotificationService notificationService;
+
+    public TaskManagementService(){
+        taskRepository = new TaskRepository();
+        userToTasksMapping = new HashMap<>();
+        notificationService = new NotificationService();
+    }
 
     public void createTask(String title, String description, Date dueDate, Priority priority){
         Task task = new Task(title, description, dueDate, priority);
@@ -24,10 +31,26 @@ public class TaskManagementServiceController {
 
     public void updateTask(Task task) {
         taskRepository.updateTask(task);
+        updateInUserToTaskMapping(task);
+    }
+
+    private void updateInUserToTaskMapping(Task task) {
+        User user = task.getAssignedUser();
+        if (user != null) {
+            List<Task> taskList = userToTasksMapping.getOrDefault(user, new ArrayList<>());
+            taskList.removeIf(t -> t.getTaskId().equals(task.getTaskId()));
+            taskList.add(task);
+            userToTasksMapping.put(user, taskList);
+        }
     }
 
     public void deleteTask(String taskId) {
+        Task task = getTask(taskId);
         taskRepository.deleteTask(taskId);
+        User user = task.getAssignedUser();
+        if (user != null) {
+            userToTasksMapping.getOrDefault(user, new ArrayList<>()).remove(task);
+        }
     }
 
     public Task getTask(String taskId) {
@@ -44,6 +67,8 @@ public class TaskManagementServiceController {
             task.setAssignedUser(user);
             taskRepository.updateTask(task);
         }
+        userToTasksMapping.putIfAbsent(user, new ArrayList<>());
+        userToTasksMapping.get(user).add(task);
     }
 
     public void markTaskAsCompleted(String taskId) {
@@ -51,10 +76,19 @@ public class TaskManagementServiceController {
         if (task != null) {
             task.setStatus(Status.COMPLETED);
             taskRepository.updateTask(task);
+            updateInUserToTaskMapping(task);
         }
     }
 
     public List<Task> filterTasks(TaskFilter filter) {
         return filter.apply(taskRepository.getAllTasks());
+    }
+
+    public List<Task> getTasksHistory(User user){
+        return userToTasksMapping.getOrDefault(user, new ArrayList<>());
+    }
+
+    public void notify(Task task){
+        notificationService.scheduleReminder(task);
     }
 }

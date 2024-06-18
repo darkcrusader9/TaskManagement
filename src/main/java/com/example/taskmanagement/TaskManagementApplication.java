@@ -1,11 +1,10 @@
 package com.example.taskmanagement;
 
-import com.example.taskmanagement.controller.TaskManagementServiceController;
+import com.example.taskmanagement.service.TaskManagementService;
 import com.example.taskmanagement.enums.Priority;
 import com.example.taskmanagement.filter.TaskFilter;
 import com.example.taskmanagement.model.Task;
 import com.example.taskmanagement.model.User;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.Date;
@@ -15,7 +14,7 @@ import java.util.List;
 public class TaskManagementApplication {
 
     public static void main(String[] args) {
-        TaskManagementServiceController taskManager = new TaskManagementServiceController();
+        TaskManagementService taskManager = new TaskManagementService();
         User user1 = new User("Alice");
         User user2 = new User("Bob");
 
@@ -45,6 +44,27 @@ public class TaskManagementApplication {
         for (Task task : filteredTasks) {
             System.out.println("Filtered Task: " + task.getTitle());
         }
+
+        //Notify user
+        taskManager.notify(task1);
+
+        List<Task> taskList = taskManager.getTasksHistory(user1);
+        System.out.println("Task History for User 1 is");
+        for (Task task : taskList) {
+            System.out.println("Task is: " + task.getTitle());
+        }
+
+        //Delete a task and check history
+        taskManager.deleteTask(task3.getTaskId());
+
+        System.out.println("Task history after deleting...");
+
+        List<Task> taskList1 = taskManager.getTasksHistory(user1);
+        System.out.println("Task History for User 1 is");
+        for (Task task : taskList1) {
+            System.out.println("Task is: " + task.getTitle());
+        }
+
         //SpringApplication.run(TaskManagementApplication.class, args);
     }
 
