@@ -6,8 +6,10 @@ import com.example.taskmanagement.filter.TaskFilter;
 import com.example.taskmanagement.model.Task;
 import com.example.taskmanagement.model.User;
 import com.example.taskmanagement.repository.TaskRepository;
+import com.example.taskmanagement.specification.CompositeSpecification;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TaskManagementService {
     public TaskRepository taskRepository;
@@ -80,8 +82,11 @@ public class TaskManagementService {
         }
     }
 
-    public List<Task> filterTasks(TaskFilter filter) {
-        return filter.apply(taskRepository.getAllTasks());
+    public List<Task> filterTasks(CompositeSpecification compositeSpecification) {
+        //return filter.apply();
+        return taskRepository.getAllTasks().stream()
+                .filter(compositeSpecification::isSatisfiedBy)
+                .collect(Collectors.toList());
     }
 
     public List<Task> getTasksHistory(User user){

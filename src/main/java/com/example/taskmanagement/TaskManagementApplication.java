@@ -5,6 +5,9 @@ import com.example.taskmanagement.enums.Priority;
 import com.example.taskmanagement.filter.TaskFilter;
 import com.example.taskmanagement.model.Task;
 import com.example.taskmanagement.model.User;
+import com.example.taskmanagement.specification.AssignedUserSpecification;
+import com.example.taskmanagement.specification.CompositeSpecification;
+import com.example.taskmanagement.specification.PrioritySpecification;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.Date;
@@ -33,12 +36,21 @@ public class TaskManagementApplication {
         taskManager.assignTask(task3.getTaskId(), user1);
 
         // Create a TaskFilter
-        TaskFilter filter = new TaskFilter()
-                .setPriority(Priority.HIGH)
-                .setAssignedUser(user1);
+//        TaskFilter filter = new TaskFilter()
+//                .setPriority(Priority.HIGH)
+//                .setAssignedUser(user1);
+
+        //Filter HIGH Priority tasks
+        CompositeSpecification filter = new CompositeSpecification();
+        filter.addSpecification(new PrioritySpecification(Priority.HIGH));
+
+        //Filter tasks by assigned user
+        CompositeSpecification filter1 = new CompositeSpecification();
+        filter1.addSpecification(new AssignedUserSpecification("Alice"));
+        filter1.addSpecification(new PrioritySpecification(Priority.HIGH));
 
         // Get filtered tasks
-        List<Task> filteredTasks = taskManager.filterTasks(filter);
+        List<Task> filteredTasks = taskManager.filterTasks(filter1);
 
         // Print filtered tasks
         for (Task task : filteredTasks) {
